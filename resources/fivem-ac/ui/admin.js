@@ -6,6 +6,14 @@ let players = [];
 let refreshInterval;
 let autoRefreshEnabled = true;
 
+// Fallback for GetParentResourceName if not available
+function GetParentResourceName() {
+    if (typeof window.GetParentResourceName === 'function') {
+        return window.GetParentResourceName();
+    }
+    return 'fivem-ac'; // Fallback resource name
+}
+
 // Initialize the admin panel
 document.addEventListener('DOMContentLoaded', function() {
     initializeUI();
@@ -211,8 +219,26 @@ function warnPlayer(playerId) {
     if (!player) return;
     
     if (confirm(`Warn player ${player.name}?`)) {
-        // TODO: Implement warn player functionality
-        showNotification(`Warning sent to ${player.name}`, 'warning');
+        fetch(`https://${GetParentResourceName()}/warnPlayer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ playerId: parseInt(playerId) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`Warning sent to ${player.name}`, 'warning');
+                loadPlayers(); // Refresh to show updated warning count
+            } else {
+                showNotification('Error warning player: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error warning player:', error);
+            showNotification('Error warning player', 'error');
+        });
     }
 }
 

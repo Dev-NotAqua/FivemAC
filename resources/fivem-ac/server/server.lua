@@ -378,7 +378,18 @@ AddEventHandler('FivemAC:PlayerInfo', function(playerInfo)
     -- TODO: Process player info for additional validation
 end)
 
--- Admin Commands
+RegisterCommand('acpanel', function(source, args, rawCommand)
+    if not IsPlayerAceAllowed(source, config.ui.adminPermission) then
+        TriggerClientEvent('chat:addMessage', source, {
+            color = {255, 0, 0},
+            args = {"[ANTICHEAT]", "Access denied"}
+        })
+        return
+    end
+    
+    TriggerClientEvent('FivemAC:OpenUI', source)
+end, false)
+
 RegisterCommand('acban', function(source, args, rawCommand)
     if not IsPlayerAceAllowed(source, config.ui.adminPermission) then
         TriggerClientEvent('chat:addMessage', source, {
@@ -461,7 +472,7 @@ RegisterNUICallback('getPlayers', function(data, cb)
         local playerLicense = GetPlayerIdentifier(playerId)
         if playerLicense then
             players[#players + 1] = {
-                id = playerId,
+                id = tonumber(playerId),
                 name = GetPlayerName(playerId),
                 license = playerLicense,
                 score = playerScores[playerLicense] or 0,
@@ -504,6 +515,14 @@ RegisterNUICallback('getLogs', function(data, cb)
 end)
 
 RegisterNUICallback('banPlayer', function(data, cb)
+    local source = source
+    
+    -- Check if player has admin permission
+    if not IsPlayerAceAllowed(source, config.ui.adminPermission) then
+        cb({success = false, error = "Access denied"})
+        return
+    end
+    
     if not data.playerId or not data.reason then
         cb({success = false, error = "Missing required data"})
         return
@@ -511,11 +530,55 @@ RegisterNUICallback('banPlayer', function(data, cb)
     
     local targetLicense = GetPlayerIdentifier(data.playerId)
     local targetName = GetPlayerName(data.playerId)
+    local adminName = GetPlayerName(source)
     
     if targetLicense then
         local banType = data.duration and data.duration > 0 and "temp" or "permanent"
-        AddBan(targetLicense, targetName, banType, data.reason, data.duration or 0, "ADMIN")
+        AddBan(targetLicense, targetName, banType, data.reason, data.duration or 0, adminName)
         DropPlayer(data.playerId, "Banned by admin: " .. data.reason)
+        cb({success = true})
+    else
+        cb({success = false, error = "Player not found"})
+    end
+end)
+
+RegisterNUICallback('closeUI', function(data, cb)
+    cb({success = true})
+end)
+
+RegisterNUICallback('warnPlayer', function(data, cb)
+    local source = source
+    
+    -- Check if player has admin permission
+    if not IsPlayerAceAllowed(source, config.ui.adminPermission) then
+        cb({success = false, error = "Access denied"})
+        return
+    end
+    
+    if not data.playerId then
+        cb({success = false, error = "Missing player ID"})
+        return
+    end
+    
+    local targetLicense = GetPlayerIdentifier(data.playerId)
+    local targetName = GetPlayerName(data.playerId)
+    
+    if targetLicense then
+        playerWarnings[targetLicense] = (playerWarnings[targetLicense] or 0) + 1
+        
+        TriggerClientEvent('chat:addMessage', data.playerId, {
+            color = {255, 255, 0},
+            multiline = true,
+            args = {"[ANTICHEAT]", string.format("Warning %d/%d: You have been warned by an administrator", 
+                playerWarnings[targetLicense], config.punishments.maxWarnings)}
+        })
+        
+        -- Log the warning
+        LogEvent(targetLicense, targetName, "admin_warning", {
+            admin = GetPlayerName(source),
+            warningCount = playerWarnings[targetLicense]
+        }, 25)
+        
         cb({success = true})
     else
         cb({success = false, error = "Player not found"})

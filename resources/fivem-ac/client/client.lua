@@ -337,6 +337,20 @@ AddEventHandler('FivemAC:RequestInfo', function()
     TriggerServerEvent('FivemAC:PlayerInfo', playerInfo)
 end)
 
+RegisterNetEvent('FivemAC:OpenUI')
+AddEventHandler('FivemAC:OpenUI', function()
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        type = 'openUI'
+    })
+end)
+
+-- NUI Callbacks
+RegisterNUICallback('closeUI', function(data, cb)
+    SetNuiFocus(false, false)
+    cb('ok')
+end)
+
 -- Initialize
 Citizen.CreateThread(function()
     Debug("FivemAC Client initialized")

@@ -8,12 +8,14 @@ version '1.0.0'
 
 -- Client Scripts
 client_scripts {
-    'client/client.lua'
+    'client/client.lua',
+    'test.lua'
 }
 
 -- Server Scripts
 server_scripts {
-    'server/server.lua'
+    'server/server.lua',
+    'test.lua'
 }
 
 -- NUI Assets
