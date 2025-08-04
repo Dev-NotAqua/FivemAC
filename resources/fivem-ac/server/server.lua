@@ -624,3 +624,167 @@ Citizen.CreateThread(function()
     InitializeDatabase()
     Debug("FivemAC Server initialized")
 end)
+
+-- Exported Functions for Other Resources
+exports('GetPlayerScore', function(playerId)
+    local playerLicense = GetPlayerIdentifier(playerId)
+    if not playerLicense then return 0 end
+    return playerScores[playerLicense] or 0
+end)
+
+exports('IsPlayerFlagged', function(playerId)
+    local playerLicense = GetPlayerIdentifier(playerId)
+    if not playerLicense then return false end
+    local score = playerScores[playerLicense] or 0
+    return score >= config.scoring.warningThreshold
+end)
+
+exports('BanPlayer', function(playerId, reason, duration, bannedBy)
+    duration = duration or 0 -- Default to permanent ban
+    bannedBy = bannedBy or "System"
+    
+    local playerLicense = GetPlayerIdentifier(playerId)
+    local playerName = GetPlayerName(playerId)
+    
+    if not playerLicense or not playerName then
+        return false, "Player not found"
+    end
+    
+    local banType = duration > 0 and "temporary" or "permanent"
+    AddBan(playerLicense, playerName, banType, reason, duration, bannedBy)
+    
+    -- Drop the player if they're online
+    if GetPlayerName(playerId) then
+        DropPlayer(playerId, "Banned: " .. reason)
+    end
+    
+    return true, "Player banned successfully"
+end)
+
+exports('UnbanPlayer', function(license, unbannedBy)
+    unbannedBy = unbannedBy or "System"
+    
+    if not config.database.enabled then
+        -- Remove from memory-based ban list
+        banList[license] = nil
+        return true, "Player unbanned (memory)"
+    end
+    
+    local query = string.format("UPDATE %s SET active = 0 WHERE player_license = ? AND active = 1", 
+                                config.database.tables.bans)
+    
+    exports.oxmysql:execute(query, {license}, function(affectedRows)
+        if affectedRows > 0 then
+            Debug("Unbanned player with license: " .. license .. " by " .. unbannedBy)
+        end
+    end)
+    
+    return true, "Player unbanned successfully"
+end)
+
+exports('GetPlayerWarnings', function(playerId)
+    local playerLicense = GetPlayerIdentifier(playerId)
+    if not playerLicense then return 0 end
+    return playerWarnings[playerLicense] or 0
+end)
+
+exports('AddPlayerScore', function(playerId, score, reason)
+    reason = reason or "Manual addition"
+    
+    local playerLicense = GetPlayerIdentifier(playerId)
+    local playerName = GetPlayerName(playerId)
+    
+    if not playerLicense or not playerName then
+        return false, "Player not found"
+    end
+    
+    -- Add to current score
+    playerScores[playerLicense] = (playerScores[playerLicense] or 0) + score
+    
+    -- Log the manual score addition
+    LogEvent(playerLicense, playerName, "manual_score", {
+        score_added = score,
+        reason = reason,
+        new_total = playerScores[playerLicense]
+    }, score)
+    
+    -- Check for punishment thresholds
+    AddScore(playerId, "manual_score", score, {reason = reason})
+    
+    return true, "Score added successfully"
+end)
+
+exports('GetBanInfo', function(license)
+    if not config.database.enabled then
+        local ban = banList[license]
+        if ban then
+            return {
+                banned = true,
+                reason = ban.reason,
+                bannedBy = ban.bannedBy,
+                bannedAt = ban.bannedAt,
+                expiresAt = ban.expiresAt,
+                banType = ban.banType
+            }
+        end
+        return {banned = false}
+    end
+    
+    local query = string.format("SELECT * FROM %s WHERE player_license = ? AND active = 1 ORDER BY banned_at DESC LIMIT 1", 
+                                config.database.tables.bans)
+    
+    local result = exports.oxmysql:executeSync(query, {license})
+    
+    if result and #result > 0 then
+        local ban = result[1]
+        return {
+            banned = true,
+            reason = ban.reason,
+            bannedBy = ban.banned_by,
+            bannedAt = ban.banned_at,
+            expiresAt = ban.expires_at,
+            banType = ban.ban_type
+        }
+    end
+    
+    return {banned = false}
+end)
+
+exports('GetEventLogs', function(filters)
+    filters = filters or {}
+    local filteredLogs = {}
+    
+    for _, log in ipairs(eventLog) do
+        local include = true
+        
+        if filters.playerId and log.playerId ~= filters.playerId then
+            include = false
+        end
+        
+        if filters.eventType and log.eventType ~= filters.eventType then
+            include = false
+        end
+        
+        if filters.minSeverity and log.severity < filters.minSeverity then
+            include = false
+        end
+        
+        if filters.maxSeverity and log.severity > filters.maxSeverity then
+            include = false
+        end
+        
+        if filters.startTime and log.timestamp < filters.startTime then
+            include = false
+        end
+        
+        if filters.endTime and log.timestamp > filters.endTime then
+            include = false
+        end
+        
+        if include then
+            filteredLogs[#filteredLogs + 1] = log
+        end
+    end
+    
+    return filteredLogs
+end)

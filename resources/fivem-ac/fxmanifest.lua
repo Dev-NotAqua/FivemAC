@@ -18,6 +18,18 @@ server_scripts {
     'test.lua'
 }
 
+-- Exported Functions
+exports {
+    'GetPlayerScore',       -- Get a player's current anti-cheat score
+    'IsPlayerFlagged',      -- Check if player has concerning score levels
+    'BanPlayer',            -- Ban a player with specified reason and duration
+    'UnbanPlayer',          -- Remove a ban for a player
+    'GetPlayerWarnings',    -- Get warning count for a player
+    'AddPlayerScore',       -- Manually add score to a player
+    'GetBanInfo',           -- Get ban information for a player
+    'GetEventLogs'          -- Get detection event logs with filtering
+}
+
 -- NUI Assets
 ui_page 'ui/index.html'
 
