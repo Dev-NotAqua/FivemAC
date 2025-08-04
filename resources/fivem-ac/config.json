@@ -1,0 +1,98 @@
+{
+    "general": {
+        "name": "FivemAC",
+        "version": "1.0.0",
+        "debug": false,
+        "performanceMode": true
+    },
+    "detection": {
+        "aimbot": {
+            "enabled": true,
+            "threshold": 85,
+            "samplingRate": 0.1,
+            "maxAngleSnap": 15.0
+        },
+        "silentAim": {
+            "enabled": true,
+            "threshold": 80,
+            "maxDistanceCheck": 500.0
+        },
+        "esp": {
+            "enabled": true,
+            "threshold": 75,
+            "checkInterval": 5000
+        },
+        "speedhack": {
+            "enabled": true,
+            "threshold": 90,
+            "maxSpeed": 150.0,
+            "checkInterval": 1000
+        },
+        "teleport": {
+            "enabled": true,
+            "threshold": 95,
+            "maxDistance": 100.0,
+            "timeWindow": 2000
+        },
+        "weaponMods": {
+            "enabled": true,
+            "threshold": 100,
+            "checkComponents": true,
+            "checkDamage": true
+        },
+        "resourceInjection": {
+            "enabled": true,
+            "threshold": 100,
+            "monitoredResources": [],
+            "checkInterval": 10000
+        },
+        "menuDetection": {
+            "enabled": true,
+            "threshold": 90,
+            "blacklistedMenus": ["modmenu", "cheat", "trainer"]
+        }
+    },
+    "scoring": {
+        "warningThreshold": 50,
+        "kickThreshold": 100,
+        "tempBanThreshold": 200,
+        "permBanThreshold": 500,
+        "decayRate": 0.1,
+        "decayInterval": 60000
+    },
+    "punishments": {
+        "enableWarnings": true,
+        "enableKicks": true,
+        "enableTempBans": true,
+        "enablePermBans": true,
+        "tempBanDuration": 86400,
+        "maxWarnings": 3
+    },
+    "discord": {
+        "enabled": true,
+        "webhook": "YOUR_WEBHOOK_URL_HERE",
+        "enableEmbeds": true,
+        "colors": {
+            "warning": 16776960,
+            "kick": 16753920,
+            "tempBan": 16711680,
+            "permBan": 8388608
+        }
+    },
+    "database": {
+        "enabled": true,
+        "type": "mysql",
+        "connectionString": "mysql://user:password@localhost/fivemac",
+        "tables": {
+            "events": "ac_events",
+            "bans": "ac_bans",
+            "players": "ac_players"
+        }
+    },
+    "ui": {
+        "enabled": true,
+        "adminPermission": "fivemac.admin",
+        "refreshInterval": 5000,
+        "maxLogEntries": 1000
+    }
+}

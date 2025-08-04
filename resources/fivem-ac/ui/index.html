@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FivemAC Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="hidden">
+        <header class="header">
+            <h1>FivemAC Admin Panel</h1>
+            <div class="header-controls">
+                <button id="refresh-btn" class="btn btn-primary">🔄 Refresh</button>
+                <button id="close-btn" class="btn btn-secondary">✖ Close</button>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="players">👥 Players</button>
+            <button class="tab-btn" data-tab="logs">📋 Logs</button>
+            <button class="tab-btn" data-tab="settings">⚙ Settings</button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Players Tab -->
+            <div id="players-tab" class="tab-content active">
+                <div class="section">
+                    <h2>Connected Players</h2>
+                    <div class="controls">
+                        <input type="text" id="player-search" placeholder="Search players..." class="search-input">
+                        <select id="score-filter" class="filter-select">
+                            <option value="">All Scores</option>
+                            <option value="low">Low Risk (0-49)</option>
+                            <option value="medium">Medium Risk (50-99)</option>
+                            <option value="high">High Risk (100+)</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table id="players-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Score</th>
+                                    <th>Warnings</th>
+                                    <th>Risk Level</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-tbody">
+                                <!-- Players will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <div class="section">
+                    <h2>Anticheat Logs</h2>
+                    <div class="controls">
+                        <input type="text" id="log-player-search" placeholder="Search by player..." class="search-input">
+                        <select id="event-type-filter" class="filter-select">
+                            <option value="">All Events</option>
+                            <option value="aimbot">Aimbot</option>
+                            <option value="silentAim">Silent Aim</option>
+                            <option value="esp">ESP</option>
+                            <option value="speedhack_vehicle">Speed Hack (Vehicle)</option>
+                            <option value="speedhack_foot">Speed Hack (Foot)</option>
+                            <option value="teleport">Teleport</option>
+                            <option value="weaponMods">Weapon Mods</option>
+                            <option value="resourceInjection">Resource Injection</option>
+                            <option value="menuDetection">Menu Detection</option>
+                        </select>
+                        <input type="datetime-local" id="start-time" class="datetime-input">
+                        <input type="datetime-local" id="end-time" class="datetime-input">
+                        <button id="filter-logs-btn" class="btn btn-primary">Filter</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="logs-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Player</th>
+                                    <th>Event Type</th>
+                                    <th>Severity</th>
+                                    <th>Score</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody">
+                                <!-- Logs will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content">
+                <div class="section">
+                    <h2>Settings</h2>
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3>Detection Thresholds</h3>
+                            <div class="setting-item">
+                                <label for="warning-threshold">Warning Threshold:</label>
+                                <input type="number" id="warning-threshold" value="50" min="0" max="1000">
+                            </div>
+                            <div class="setting-item">
+                                <label for="kick-threshold">Kick Threshold:</label>
+                                <input type="number" id="kick-threshold" value="100" min="0" max="1000">
+                            </div>
+                            <div class="setting-item">
+                                <label for="tempban-threshold">Temp Ban Threshold:</label>
+                                <input type="number" id="tempban-threshold" value="200" min="0" max="1000">
+                            </div>
+                            <div class="setting-item">
+                                <label for="permban-threshold">Perm Ban Threshold:</label>
+                                <input type="number" id="permban-threshold" value="500" min="0" max="1000">
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3>System Settings</h3>
+                            <div class="setting-item">
+                                <label for="auto-refresh">Auto Refresh:</label>
+                                <input type="checkbox" id="auto-refresh" checked>
+                            </div>
+                            <div class="setting-item">
+                                <label for="refresh-interval">Refresh Interval (seconds):</label>
+                                <input type="number" id="refresh-interval" value="5" min="1" max="60">
+                            </div>
+                            <div class="setting-item">
+                                <label for="max-logs">Max Log Entries:</label>
+                                <input type="number" id="max-logs" value="1000" min="100" max="10000">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button id="save-settings-btn" class="btn btn-success">Save Settings</button>
+                        <button id="reset-settings-btn" class="btn btn-warning">Reset to Default</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Ban Modal -->
+    <div id="ban-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ban Player</h3>
+                <button class="modal-close" onclick="closeBanModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ban-player-name">Player:</label>
+                    <input type="text" id="ban-player-name" readonly>
+                    <input type="hidden" id="ban-player-id">
+                </div>
+                <div class="form-group">
+                    <label for="ban-reason">Reason:</label>
+                    <textarea id="ban-reason" rows="3" placeholder="Enter ban reason..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ban-type">Ban Type:</label>
+                    <select id="ban-type">
+                        <option value="permanent">Permanent</option>
+                        <option value="temporary">Temporary</option>
+                    </select>
+                </div>
+                <div class="form-group" id="ban-duration-group" style="display: none;">
+                    <label for="ban-duration">Duration (seconds):</label>
+                    <input type="number" id="ban-duration" min="1" value="86400">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="confirmBan()">Ban Player</button>
+                <button class="btn btn-secondary" onclick="closeBanModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Details Modal -->
+    <div id="log-details-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Event Details</h3>
+                <button class="modal-close" onclick="closeLogDetailsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="log-details-content">
+                    <!-- Event details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLogDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+    <script src="logs.js"></script>
+</body>
+</html>
